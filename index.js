@@ -2,6 +2,11 @@ console.clear()
 const { prompt } = require("inquirer")
 const mysql = require('mysql2');
 
+// const departmentList = db.query(db.query("SELECT * FROM department ", function (err, results) {
+//     console.log(results)
+
+// }))
+
 const db = mysql.createConnection(
     {
         host: 'localhost',
@@ -11,11 +16,6 @@ const db = mysql.createConnection(
     },
     console.log(`Connected to the employees database.`)
 );
-
-
-// db.query("SELECT * FROM employee", function (err, results) {
-//     res.json(results)
-// })
 
 // GIVEN a command-line application that accepts user input
 // WHEN I start the application
@@ -95,11 +95,10 @@ const buildEmployee = [
 ]
 
 
-
 function employeeHandler(menu) {
     switch (menu.menu) {
         case "View Employee List":
-            // get?
+
             db.query("SELECT * FROM employee", function (err, results) {
                 console.clear()
                 console.table(results)
@@ -109,7 +108,7 @@ function employeeHandler(menu) {
             break;
 
         case "Add Employee":
-            // post?
+
             prompt(buildEmployee).then((data) => console.log(data))
             break;
 
@@ -134,9 +133,10 @@ const buildRole = [
     },
     {
         //TODO might switch to choices later on
-        type: 'text',
+        type: 'choices',
         name: "department",
         message: 'Add to which department?',
+        choices: [1, 2, 3]
     },
 ]
 function roleHandler(menu) {
@@ -178,9 +178,5 @@ function init() {
         menuHandler(data);
     })
 }
-
-
-
-
 
 init()
