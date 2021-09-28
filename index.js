@@ -2,6 +2,7 @@ console.clear()
 const { prompt } = require("inquirer")
 const mysql = require('mysql2');
 
+
 // const departmentList = db.query(db.query("SELECT * FROM department ", function (err, results) {
 //     console.log(results)
 
@@ -52,7 +53,7 @@ const buildDepartment = [
 function departmentHandler(menu) {
     switch (menu.menu) {
         case "View All Departments":
-            db.query("SELECT * FROM department", function (err, results) {
+            db.query("SELECT * FROM department ORDER BY id", function (err, results) {
                 console.clear()
                 console.table(results)
                 init()
@@ -60,7 +61,13 @@ function departmentHandler(menu) {
             break;
 
         case "Add Department":
-            prompt(buildDepartment)
+            prompt(buildDepartment).then(data => {
+                let addDepartment = data.department
+                db.query(`INSERT INTO department (name)
+                VALUES
+                (?);`, addDepartment, (err, result) => { console.log(`Sucessfully added department`) })
+                init()
+            })
             break;
 
         default:
@@ -93,13 +100,17 @@ const buildEmployee = [
         message: 'Who is their Manager?',
     },
 ]
-
-
+const employeeQuery = `SELECT e.id, e.first_name, e.last_name , title, salary, department.name AS department, CONCAT(m.first_name," ",m.last_name) AS Manager
+FROM employee e
+LEFT JOIN employee m on  m.id = e.manager_id
+INNER JOIN role on e.role_id = role.id
+Inner join department on role.department_id = department.id
+ORDER BY id;`
 function employeeHandler(menu) {
     switch (menu.menu) {
         case "View Employee List":
 
-            db.query("SELECT * FROM employee", function (err, results) {
+            db.query(employeeQuery, function (err, results) {
                 console.clear()
                 console.table(results)
                 init()
@@ -109,7 +120,15 @@ function employeeHandler(menu) {
 
         case "Add Employee":
 
-            prompt(buildEmployee).then((data) => console.log(data))
+            prompt(buildEmployee).then((data) => {
+
+                let insertToEmployee = [data.first, data.last,]
+                console.log(data)
+                db.query(`INSERT INTO employee (first_name,last_name,role_id,manager_id)
+                VALUES
+                // (?,?,?,?);`, insertToEmployee, () => console.log(`\nSuccessfully added Employee`))
+
+            })
             break;
 
         default:
@@ -120,6 +139,15 @@ function employeeHandler(menu) {
 // THEN I am presented with the job title, role id, the department that role belongs to, and the salary for that role
 // WHEN I choose to add a role
 // THEN I am prompted to enter the name, salary, and department for the role and that role is added to the database
+const addToDepartment = []
+
+db.query(`SELECT name FROM department;`, (err, res) => {
+    for (let i = 0; i < res.length; i++) {
+        addToDepartment.push(res[i].name)
+    }
+})
+
+
 const buildRole = [
     {
         type: 'text',
@@ -132,18 +160,19 @@ const buildRole = [
         message: 'Enter the Salary:',
     },
     {
-        //TODO might switch to choices later on
-        type: 'choices',
+        type: 'list',
         name: "department",
         message: 'Add to which department?',
-        choices: [1, 2, 3]
+        choices: addToDepartment
+
     },
 ]
+
 function roleHandler(menu) {
     console.log(menu)
     switch (menu.menu) {
         case "View All Roles":
-            db.query("SELECT * FROM role", function (err, results) {
+            db.query("SELECT * FROM role ORDER BY id", function (err, results) {
                 console.clear()
                 console.table(results)
                 init()
@@ -152,7 +181,26 @@ function roleHandler(menu) {
             break;
 
         case "Add Role":
-            prompt(buildRole)
+            prompt(buildRole).then((data) => {
+                let departmentindex = ""
+
+                for (let i = 0; i < addToDepartment.length; i++) {
+                    if (addToDepartment[i] === data.department) {
+                        departmentindex = i
+                    }
+                }
+                let insertToRole = [data.role, data.salary, departmentindex]
+                console.log(insertToRole)
+
+                db.query(`INSERT INTO role (title,salary,department_id)
+                VALUES
+                (?,?,?);`, insertToRole, (err, res) => {
+                    console.log(`Sucessfully added role`)
+                })
+                init()
+            }
+
+            )
             break;
 
         default:
@@ -165,18 +213,18 @@ function roleHandler(menu) {
 function updateHandler() { }
 
 function menuHandler(choice) {
-    console.log(choice.menu)
+
     if (choice.menu === "View All Roles" || choice.menu === "Add Role") { roleHandler(choice) }
     else if (choice.menu === "View Employee List" || choice.menu === "Add Employee") { employeeHandler(choice) }
     else if (choice.menu === "View All Departments" || choice.menu === "Add Department") { departmentHandler(choice) }
-    else { console.log("Menu closed") }
+    return "Menu Closed"
 }
 
 function init() {
     prompt(menu).then((data) => {
-        console.log(data);
         menuHandler(data);
     })
+
 }
 
 init()
