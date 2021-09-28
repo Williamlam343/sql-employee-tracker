@@ -1,5 +1,21 @@
+console.clear()
 const { prompt } = require("inquirer")
+const mysql = require('mysql2');
 
+const db = mysql.createConnection(
+    {
+        host: 'localhost',
+        user: 'root',
+        password: '',
+        database: 'employees'
+    },
+    console.log(`Connected to the employees database.`)
+);
+
+
+// db.query("SELECT * FROM employee", function (err, results) {
+//     res.json(results)
+// })
 
 // GIVEN a command-line application that accepts user input
 // WHEN I start the application
@@ -36,7 +52,11 @@ const buildDepartment = [
 function departmentHandler(menu) {
     switch (menu.menu) {
         case "View All Departments":
-
+            db.query("SELECT * FROM department", function (err, results) {
+                console.clear()
+                console.table(results)
+                init()
+            })
             break;
 
         case "Add Department":
@@ -73,10 +93,18 @@ const buildEmployee = [
         message: 'Who is their Manager?',
     },
 ]
+
+
+
 function employeeHandler(menu) {
     switch (menu.menu) {
         case "View Employee List":
             // get?
+            db.query("SELECT * FROM employee", function (err, results) {
+                console.clear()
+                console.table(results)
+                init()
+            })
 
             break;
 
@@ -115,6 +143,11 @@ function roleHandler(menu) {
     console.log(menu)
     switch (menu.menu) {
         case "View All Roles":
+            db.query("SELECT * FROM role", function (err, results) {
+                console.clear()
+                console.table(results)
+                init()
+            })
 
             break;
 
@@ -127,6 +160,8 @@ function roleHandler(menu) {
     }
 }
 
+// WHEN I choose to update an employee role
+// THEN I am prompted to select an employee to update and their new role and this information is updated in the database 
 function updateHandler() { }
 
 function menuHandler(choice) {
@@ -147,11 +182,5 @@ function init() {
 
 
 
-
-
-
-
-// WHEN I choose to update an employee role
-// THEN I am prompted to select an employee to update and their new role and this information is updated in the database 
 
 init()
